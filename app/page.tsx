@@ -1,65 +1,225 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import ItemCard from "@/components/ItemCard";
+import Sheet, { type SheetResult } from "@/components/Sheet";
+import EmptyState from "@/components/EmptyState";
+import {
+  type Item,
+  type Preset,
+  DAY,
+  uid,
+  loadItems,
+  saveItems,
+  freshnessRatio,
+} from "@/lib/lastly";
+
+type Toast = { msg: string; snapshot: Item[] };
 
 export default function Home() {
+  const [items, setItems] = useState<Item[] | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editing, setEditing] = useState<Item | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setItems(loadItems());
+  }, []);
+
+  useEffect(() => {
+    if (items !== null) saveItems(items);
+  }, [items]);
+
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 30_000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") setNow(Date.now());
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(tick);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
+  const showToast = (msg: string, snapshot: Item[]) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ msg, snapshot });
+    toastTimer.current = setTimeout(() => setToast(null), 5000);
+  };
+
+  const resetItem = (item: Item) => {
+    if (!items) return;
+    showToast(`${item.name} — done`, items);
+    setItems(
+      items.map((it) =>
+        it.id === item.id ? { ...it, history: [...it.history, Date.now()] } : it
+      )
+    );
+  };
+
+  const openAdd = () => {
+    setEditing(null);
+    setSheetOpen(true);
+  };
+
+  const openEdit = (item: Item) => {
+    setEditing(item);
+    setSheetOpen(true);
+  };
+
+  const handleSave = (data: SheetResult) => {
+    if (!items) return;
+    if (editing) {
+      setItems(
+        items.map((it) =>
+          it.id === editing.id
+            ? { ...it, name: data.name, emoji: data.emoji, intervalDays: data.intervalDays }
+            : it
+        )
+      );
+    } else {
+      const offsetMs =
+        data.lastOffsetDays === -1
+          ? data.intervalDays * DAY
+          : data.lastOffsetDays * DAY;
+      const ts = Date.now() - offsetMs;
+      setItems([
+        ...items,
+        {
+          id: uid(),
+          name: data.name,
+          emoji: data.emoji,
+          intervalDays: data.intervalDays,
+          history: [ts],
+          createdAt: ts,
+        },
+      ]);
+    }
+    setSheetOpen(false);
+  };
+
+  const handleDelete = (id: string) => {
+    if (!items) return;
+    const item = items.find((it) => it.id === id);
+    showToast(`${item?.name ?? "Item"} deleted`, items);
+    setItems(items.filter((it) => it.id !== id));
+    setSheetOpen(false);
+  };
+
+  const addPreset = (preset: Preset) => {
+    if (!items) return;
+    // Presets arrive with an honest default: assume it's due now
+    const ts = Date.now() - preset.intervalDays * DAY;
+    setItems([
+      ...items,
+      { id: uid(), ...preset, history: [ts], createdAt: ts },
+    ]);
+  };
+
+  const undo = () => {
+    if (!toast) return;
+    setItems(toast.snapshot);
+    setToast(null);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+  };
+
+  const sorted = items
+    ? [...items].sort((a, b) => freshnessRatio(b, now) - freshnessRatio(a, now))
+    : [];
+  const staleCount = sorted.filter((it) => freshnessRatio(it, now) >= 1).length;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main className="mx-auto min-h-dvh max-w-md px-5 pb-36 pt-[calc(env(safe-area-inset-top)+2rem)]">
+      <header className="flex items-baseline justify-between">
+        <h1 className="font-display text-3xl italic tracking-tight">Lastly</h1>
+        {items !== null && items.length > 0 && (
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.p
+              key={staleCount}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              className="text-[13px] text-moss"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              {staleCount === 0
+                ? "everything’s fresh"
+                : `${staleCount} need${staleCount === 1 ? "s" : ""} attention`}
+            </motion.p>
+          </AnimatePresence>
+        )}
+      </header>
+
+      {items !== null && items.length === 0 && (
+        <EmptyState onPick={addPreset} onCustom={openAdd} />
+      )}
+
+      {items !== null && items.length > 0 && (
+        <>
+          <p className="mt-1 text-[13px] text-moss">
+            hold a card when you’ve just done it
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <ul className="mt-6 flex flex-col gap-3">
+            <AnimatePresence initial={false} mode="popLayout">
+              {sorted.map((item, i) => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  now={now}
+                  index={i}
+                  onReset={resetItem}
+                  onOpen={openEdit}
+                />
+              ))}
+            </AnimatePresence>
+          </ul>
+        </>
+      )}
+
+      {items !== null && items.length > 0 && (
+        <motion.button
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.3 }}
+          whileTap={{ scale: 0.88 }}
+          onClick={openAdd}
+          aria-label="Track something new"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] left-1/2 z-30 grid h-14 w-14 -translate-x-1/2 place-items-center rounded-full bg-sage text-2xl font-light text-ink shadow-[0_8px_30px_rgba(143,227,169,0.35)]"
+        >
+          +
+        </motion.button>
+      )}
+
+      <Sheet
+        open={sheetOpen}
+        editing={editing}
+        onClose={() => setSheetOpen(false)}
+        onSave={handleSave}
+        onDelete={handleDelete}
+      />
+
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+            className="fixed bottom-[calc(env(safe-area-inset-bottom)+6rem)] left-1/2 z-30 flex w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 items-center justify-between rounded-2xl border border-line-soft bg-surface-2 px-4 py-3 shadow-xl"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <span className="truncate text-[14px]">{toast.msg}</span>
+            <button
+              onClick={undo}
+              className="ml-3 shrink-0 text-[14px] font-semibold text-sage"
+            >
+              Undo
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </main>
   );
 }

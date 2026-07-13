@@ -1,26 +1,59 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Pine ink — a dark with life in it, not a dead black */
+  --color-ink: #0b110d;
+  --color-surface: #131a15;
+  --color-surface-2: #1a231c;
+  --color-line: #243026;
+  --color-line-soft: #1e2820;
+  --color-track: #212c24;
+
+  --color-mist: #eaf1e8;
+  --color-moss: #8a9b8c;
+
+  /* Freshness itself is the palette */
+  --color-sage: #8fe3a9;
+  --color-honey: #efc868;
+  --color-ember: #ef7a5b;
+
+  --radius-card: 1.25rem;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
+  --font-body: var(--font-figtree);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-ink);
+  color: var(--color-mist);
+  font-family: var(--font-body), system-ui, sans-serif;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+::selection {
+  background: rgba(143, 227, 169, 0.25);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+input:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-sage);
+  outline-offset: 2px;
 }

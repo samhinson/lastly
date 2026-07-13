@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lastly
 
-## Getting Started
+**When did you last…?** A gentle tracker for the small upkeep of life — the sheets, the toothbrush, the call to Mom — so nothing quietly goes stale.
 
-First, run the development server:
+Not a todo list. Lastly tracks *time since* you last did a thing, and shows freshness as a ring that slowly drains from sage green through honey amber to ember red.
+
+## How it works
+
+- **Add a thing** you want to keep fresh, how often it should happen, and when you last did it.
+- **Watch the ring.** Full and green means fresh; drained and red means it's been too long. The most-overdue items float to the top.
+- **Hold a card** when you've just done it — the ring bursts and refills. Undo if you fat-fingered it.
+
+## Stack
+
+- [Next.js](https://nextjs.org) (App Router) + TypeScript
+- [Tailwind CSS v4](https://tailwindcss.com)
+- [Motion](https://motion.dev) for spring physics, layout animations, and the hold-to-reset interaction
+- localStorage persistence — no accounts, no API, no backend
+- Installable PWA (Add to Home Screen)
+
+## Develop
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Icons are generated from `scripts/icon-source.svg`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+node scripts/gen-icons.mjs
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Design
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Pine-ink dark theme where freshness itself is the palette (sage → honey → ember). Fraunces italic for the wordmark and time numerals, Figtree for UI. Respects `prefers-reduced-motion`.
