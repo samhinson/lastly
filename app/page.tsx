@@ -101,11 +101,12 @@ export default function Home() {
         )
       );
     } else {
+      const nowTs = Date.now();
       const offsetMs =
         data.lastOffsetDays === -1
           ? data.intervalDays * DAY
           : data.lastOffsetDays * DAY;
-      const ts = Date.now() - offsetMs;
+      const ts = nowTs - offsetMs;
       setItems([
         ...items,
         {
@@ -117,6 +118,9 @@ export default function Home() {
           createdAt: ts,
         },
       ]);
+      // Measure elapsed against the same instant the timestamp was built from,
+      // so "20 days ago" doesn't render as 19 due to a stale clock.
+      setNow(nowTs);
     }
     setSheetOpen(false);
   };

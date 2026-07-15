@@ -47,9 +47,13 @@ export default function Sheet({
   const [customDays, setCustomDays] = useState("");
   const [showCustom, setShowCustom] = useState(false);
   const [whenOff, setWhenOff] = useState(0);
+  const [showWhenCustom, setShowWhenCustom] = useState(false);
+  const [whenCustomDays, setWhenCustomDays] = useState("");
 
   useEffect(() => {
     if (!open) return;
+    setShowWhenCustom(false);
+    setWhenCustomDays("");
     const source = editing ?? seed;
     if (source) {
       setName(source.name);
@@ -71,6 +75,9 @@ export default function Sheet({
   const effectiveDays = showCustom
     ? Math.max(1, parseInt(customDays, 10) || 0)
     : days;
+  const effectiveWhenOff = showWhenCustom
+    ? Math.max(0, parseInt(whenCustomDays, 10) || 0)
+    : whenOff;
   const valid = name.trim().length > 0 && effectiveDays >= 1;
 
   const save = () => {
@@ -79,7 +86,7 @@ export default function Sheet({
       name: name.trim(),
       emoji,
       intervalDays: effectiveDays,
-      lastOffsetDays: whenOff,
+      lastOffsetDays: effectiveWhenOff,
     });
   };
 
@@ -182,13 +189,36 @@ export default function Sheet({
                   {WHEN_OPTIONS.map((o) => (
                     <Chip
                       key={o.label}
-                      active={whenOff === o.off}
-                      onClick={() => setWhenOff(o.off)}
+                      active={!showWhenCustom && whenOff === o.off}
+                      onClick={() => {
+                        setShowWhenCustom(false);
+                        setWhenOff(o.off);
+                      }}
                     >
                       {o.label}
                     </Chip>
                   ))}
+                  <Chip
+                    active={showWhenCustom}
+                    onClick={() => setShowWhenCustom(true)}
+                  >
+                    Custom
+                  </Chip>
                 </div>
+                {showWhenCustom && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      value={whenCustomDays}
+                      onChange={(e) =>
+                        setWhenCustomDays(e.target.value.replace(/\D/g, ""))
+                      }
+                      inputMode="numeric"
+                      placeholder="10"
+                      className="w-20 rounded-xl border border-line-soft bg-ink px-3 py-2 text-[15px]"
+                    />
+                    <span className="text-[13px] text-moss">days ago</span>
+                  </div>
+                )}
               </>
             )}
 
