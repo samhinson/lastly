@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import ItemCard from "@/components/ItemCard";
-import Sheet, { type SheetResult } from "@/components/Sheet";
+import Sheet, { type SheetResult, type Seed } from "@/components/Sheet";
 import EmptyState from "@/components/EmptyState";
+import Picker from "@/components/Picker";
 import {
   type Item,
   type Preset,
@@ -22,6 +23,8 @@ export default function Home() {
   const [now, setNow] = useState(() => Date.now());
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editing, setEditing] = useState<Item | null>(null);
+  const [seed, setSeed] = useState<Seed | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -61,13 +64,29 @@ export default function Home() {
     );
   };
 
-  const openAdd = () => {
+  // Picking a suggestion pre-fills the sheet (name, emoji, interval) so the
+  // timing stays editable before the item is created.
+  const pickPreset = (preset: Preset) => {
+    setPickerOpen(false);
     setEditing(null);
+    setSeed({
+      name: preset.name,
+      emoji: preset.emoji,
+      intervalDays: preset.intervalDays,
+    });
+    setSheetOpen(true);
+  };
+
+  const startCustom = () => {
+    setPickerOpen(false);
+    setEditing(null);
+    setSeed(null);
     setSheetOpen(true);
   };
 
   const openEdit = (item: Item) => {
     setEditing(item);
+    setSeed(null);
     setSheetOpen(true);
   };
 
@@ -110,16 +129,6 @@ export default function Home() {
     setSheetOpen(false);
   };
 
-  const addPreset = (preset: Preset) => {
-    if (!items) return;
-    // Presets arrive with an honest default: assume it's due now
-    const ts = Date.now() - preset.intervalDays * DAY;
-    setItems([
-      ...items,
-      { id: uid(), ...preset, history: [ts], createdAt: ts },
-    ]);
-  };
-
   const undo = () => {
     if (!toast) return;
     setItems(toast.snapshot);
@@ -154,7 +163,7 @@ export default function Home() {
       </header>
 
       {items !== null && items.length === 0 && (
-        <EmptyState onPick={addPreset} onCustom={openAdd} />
+        <EmptyState onPick={pickPreset} onCustom={startCustom} />
       )}
 
       {items !== null && items.length > 0 && (
@@ -185,7 +194,7 @@ export default function Home() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.3 }}
           whileTap={{ scale: 0.88 }}
-          onClick={openAdd}
+          onClick={() => setPickerOpen(true)}
           aria-label="Track something new"
           className="fixed bottom-[calc(env(safe-area-inset-bottom)+1.5rem)] left-1/2 z-30 grid h-14 w-14 -translate-x-1/2 place-items-center rounded-full bg-sage text-2xl font-light text-ink shadow-[0_8px_30px_rgba(143,227,169,0.35)]"
         >
@@ -193,9 +202,17 @@ export default function Home() {
         </motion.button>
       )}
 
+      <Picker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onPick={pickPreset}
+        onCustom={startCustom}
+      />
+
       <Sheet
         open={sheetOpen}
         editing={editing}
+        seed={seed}
         onClose={() => setSheetOpen(false)}
         onSave={handleSave}
         onDelete={handleDelete}

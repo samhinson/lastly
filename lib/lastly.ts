@@ -63,25 +63,36 @@ export function intervalLabel(days: number): string {
   return `every ${days} days`;
 }
 
-export type Preset = { name: string; emoji: string; intervalDays: number };
+export type Preset = {
+  name: string;
+  /** Short caption shown inside a bubble */
+  short: string;
+  emoji: string;
+  intervalDays: number;
+};
 
 export const PRESETS: Preset[] = [
-  { name: "New toothbrush head", emoji: "🪥", intervalDays: 90 },
-  { name: "Washed the sheets", emoji: "🛏️", intervalDays: 14 },
-  { name: "Called Mom", emoji: "📞", intervalDays: 7 },
-  { name: "Watered the plants", emoji: "🌿", intervalDays: 3 },
-  { name: "Backed up my laptop", emoji: "💾", intervalDays: 30 },
-  { name: "Got a haircut", emoji: "✂️", intervalDays: 42 },
-  { name: "Deep-cleaned the bathroom", emoji: "🧽", intervalDays: 30 },
-  { name: "Checked tire pressure", emoji: "🚗", intervalDays: 60 },
-  { name: "Replaced the water filter", emoji: "💧", intervalDays: 90 },
-  { name: "Tested the smoke alarm", emoji: "🧯", intervalDays: 180 },
+  { name: "Washed the sheets", short: "Sheets", emoji: "🛏️", intervalDays: 14 },
+  { name: "Called Mom", short: "Call Mom", emoji: "📞", intervalDays: 7 },
+  { name: "Watered the plants", short: "Plants", emoji: "🌿", intervalDays: 4 },
+  { name: "New toothbrush head", short: "Toothbrush", emoji: "🪥", intervalDays: 90 },
+  { name: "Washed the towels", short: "Towels", emoji: "🧺", intervalDays: 10 },
+  { name: "Backed up my laptop", short: "Backup", emoji: "💾", intervalDays: 30 },
+  { name: "Got a haircut", short: "Haircut", emoji: "✂️", intervalDays: 42 },
+  { name: "Cleaned the bathroom", short: "Bathroom", emoji: "🧽", intervalDays: 21 },
+  { name: "Called a friend", short: "Call friend", emoji: "☎️", intervalDays: 14 },
+  { name: "Replaced the water filter", short: "Water filter", emoji: "💧", intervalDays: 90 },
+  { name: "Checked tire pressure", short: "Tires", emoji: "🚗", intervalDays: 60 },
+  { name: "Tested the smoke alarm", short: "Smoke alarm", emoji: "🧯", intervalDays: 180 },
+  { name: "Date night", short: "Date night", emoji: "🌙", intervalDays: 14 },
+  { name: "Journaled", short: "Journal", emoji: "📓", intervalDays: 2 },
 ];
 
 export const EMOJIS = [
   "🪥", "🛏️", "📞", "🌿", "💧", "💾", "✂️", "🧽",
   "🚗", "🧯", "🦷", "🏃", "📚", "🧺", "🍳", "🛁",
   "🐕", "🐈", "🎸", "🧴", "🌙", "☎️", "🪴", "✨",
+  "📓", "🧹", "💊", "🚿", "🌱", "🔋", "🗑️", "🧼",
 ];
 
 export const INTERVAL_OPTIONS: { label: string; days: number }[] = [

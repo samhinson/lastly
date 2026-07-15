@@ -13,6 +13,9 @@ export type SheetResult = {
   lastOffsetDays: number;
 };
 
+/** Pre-fills a new-item sheet from a chosen suggestion (still editable). */
+export type Seed = { name: string; emoji: string; intervalDays: number };
+
 const WHEN_OPTIONS = [
   { label: "Just now", off: 0 },
   { label: "Yesterday", off: 1 },
@@ -24,12 +27,20 @@ const WHEN_OPTIONS = [
 type Props = {
   open: boolean;
   editing: Item | null;
+  seed?: Seed | null;
   onClose: () => void;
   onSave: (data: SheetResult) => void;
   onDelete: (id: string) => void;
 };
 
-export default function Sheet({ open, editing, onClose, onSave, onDelete }: Props) {
+export default function Sheet({
+  open,
+  editing,
+  seed = null,
+  onClose,
+  onSave,
+  onDelete,
+}: Props) {
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState(EMOJIS[0]);
   const [days, setDays] = useState(7);
@@ -39,12 +50,14 @@ export default function Sheet({ open, editing, onClose, onSave, onDelete }: Prop
 
   useEffect(() => {
     if (!open) return;
-    if (editing) {
-      setName(editing.name);
-      setEmoji(editing.emoji);
-      setDays(editing.intervalDays);
-      setShowCustom(!INTERVAL_OPTIONS.some((o) => o.days === editing.intervalDays));
-      setCustomDays(String(editing.intervalDays));
+    const source = editing ?? seed;
+    if (source) {
+      setName(source.name);
+      setEmoji(source.emoji);
+      setDays(source.intervalDays);
+      setShowCustom(!INTERVAL_OPTIONS.some((o) => o.days === source.intervalDays));
+      setCustomDays(String(source.intervalDays));
+      setWhenOff(0);
     } else {
       setName("");
       setEmoji(EMOJIS[0]);
@@ -53,7 +66,7 @@ export default function Sheet({ open, editing, onClose, onSave, onDelete }: Prop
       setCustomDays("");
       setWhenOff(0);
     }
-  }, [open, editing]);
+  }, [open, editing, seed]);
 
   const effectiveDays = showCustom
     ? Math.max(1, parseInt(customDays, 10) || 0)
